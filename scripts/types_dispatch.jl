@@ -1,5 +1,5 @@
 # # Julia basics
-#
+# ## Functions
 # In Julia, a function is an object that maps a tuple of argument values to a return value. In the following example we define function that
 
 function f(x,y)
@@ -51,7 +51,7 @@ f_hello(2,3,2)
 f_hello(2,3; sayhello = true)
 
 
-# ### Anonymous functions
+# ## Anonymous functions
 
 # It is also common to use anonymous functions, ie functions without specified name. Such a function can be defined in almost the same way as a normal function:
 
@@ -71,7 +71,144 @@ map([1,3,-1]) do x
     x^2 + 2x - 1
 end
 
-# # Types, methods and multiple-dispatch
+# ## Arrays
+#
+# Arrays can be constructed directly with square braces; the syntax
+
+vector = [1:2, 4:5]
+
+# creates a one dimensional array (i.e., a vector)
+
+size(vector)
+
+# If the arguments inside the square brackets are separated by semicolons (;) or newlines instead of commas, then their contents are vertically concatenated together instead of the arguments being used as elements themselves.
+
+[1:2; 4:5]
+
+#-
+
+[1:2
+4:5]
+
+# Similarly, if the arguments are separated by tabs or spaces, then their contents are horizontally concatenated together.
+
+[1:2  4:5  7:8]
+
+# Using semicolons (or newlines) and spaces (or tabs) can be combined to concatenate both horizontally and vertically at the same time.
+
+[1 2
+3 4]
+
+# There is a convenient notation (called slicing) to access a subset of elements from an array. Let’s suppose we want to access the 2nd to 5th elements of an array of length 6, we can do it in the following way:
+
+a = [1,2,3,4,5,6]
+a[2:5]
+
+# We can also use this notation to access a subset of a matrix, for example:
+
+A = rand(4,4)
+
+#-
+
+A[2:3, 2:3]
+
+# As in other programming languages, arrays are pointers to location in memory, thus we need to pay attention when we handle them. If we create an array `A` and we assign it to a variable `b`, the elements of the original array can be modified be modified by accessing `b`:
+
+a = [1,2,3]
+b = a
+
+#-
+
+b[2] = 42
+a
+
+# This is particularly useful because it lets us save memory, but may have undesirable effects. If we want to make a copy of an array we need to use the function `copy`
+
+a = [1,2,3]
+b = copy(a)
+
+#-
+
+b[2] = 42
+b
+
+#-
+
+a
+
+
+# ### Iteration
+
+A = rand(4,3)
+for a in A
+    @show a
+end
+
+#-
+
+for i in eachindex(A)
+    @show i
+end
+
+#-
+
+for (i, a) in enumerate(A)
+    @show (i, a)
+end
+
+
+# ### Comprehensions and Generator Expressions
+#
+# Comprehensions provide a general and powerful way to construct arrays. Comprehension syntax is similar to set construction notation in mathematics:
+
+f(x, y) = x + y
+A = [f(x,y) for x in 1:10, y in 11:14]
+
+# Comprehensions can also be written without the enclosing square brackets, producing an object known as a generator. This object can be iterated to produce values on demand, instead of allocating an array and storing them in advance (see Iteration). For example, the following expression sums a series without allocating memory:
+
+sum(1/n^2 for n in 1:1000)
+
+# Ranges in generators and comprehensions can depend on previous ranges by writing multiple for keywords:
+
+[(i,j) for i in 1:3 for j in 1:i]
+
+# In such cases, the result is always 1-d. Generated values can also be filtered using the if keyword:
+
+[(i,j) for i in 1:3 for j in 1:i if i+j == 4]
+
+
+# ### Broadcasting
+#
+# In Julia, with broadcasting we indicate the action of mapping a function or an operation (which are the same in Julia) over an array or a matrix element by element. The broadcasting notation for operators consists of adding a dot `.` before the operator (for example `.*`)
+
+a = [1,2,3] # column vector
+b = [4,5,6] # column vector
+c = [4 5 6] # row vector
+
+# Without the dot, we get an error, since we cannot multiply column vector by another column vector
+
+a * b
+
+#-
+
+c * a
+
+# This makes perfectly sense from a mathematical point of view and operators behave how we would mathematically expect. Nonetheless, in programming it is often useful to write operations which work on an element by element basis, and for this reason broadcasting comes to our help.
+
+a .* b
+
+#-
+
+c .* a
+
+# We can use the broadcasting notation also to map a function over an n-dimensional array. There is no speed gain in doing so, as it will be exactly equivalent to writing a for loop, but its conciseness may be useful sometimes. So the core idea in Julia is to write functions that take single values and use broadcasting when needed, unless the functions must explicitly work on arrays (for example to compute the mean of a series of values, perform matrix operations, vector multiplications, etc).
+
+a = [1,2,3]
+ff(x) = x + 1
+ff.(a)
+
+
+# ## Types, methods and multiple-dispatch
 
 # So far we did not mention any types. The default behavior in Julia when types are omitted is to allow values to be of any type. Thus, one can write many useful Julia functions without ever explicitly using types. When additional expressiveness is needed, however, it is easy to gradually introduce explicit type annotations into previously "untyped" code.
 #
